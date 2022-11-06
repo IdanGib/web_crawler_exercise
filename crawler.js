@@ -3,27 +3,27 @@ const htmlparser2 = require("htmlparser2");
 const axios = require('axios');
 
 class HtmlParser {
-  getPageImagesAndLinks(page) {
-    const data = {
-      links: [],
-      images: [],
-    };
+  extract(page, data) {
+    const result = {};
     return new Promise((resolve, reject) => {
       const parser = new htmlparser2.Parser({
-          onopentag(name, attributes) {
-              if (name === "img") {
-                  data.images.push(attributes.src);
-                
-              }
-              if (name === "link") {
-                  data.links.push(attributes.href);
+          onopentag(tagName, attributes) {
+              let attrValue;
+              for (const { tag, attr, name } of data) {
+                attrValue = attributes?.[attr];
+                if (tagName === tag && attrValue) {
+                  if(!result[name]) {
+                    result[name] = [];
+                  }
+                  result[name].push(attrValue);
+                }
               }
           },
           onerror(err) {
             reject(err);
           },
           onend() {
-            resolve(data);
+            resolve(result);
           }
       });
       parser.write(page);
@@ -47,8 +47,13 @@ class WebPage {
 class Crawler {
   async extractImages({ outputFilePath, depth = 0, url }) {
     const page = await new WebPage().getPage(url);
-    const data = await new HtmlParser().getPageImagesAndLinks(page);
-    writeFileSync(outputFilePath, JSON.stringify({ data }));
+    const { images } = await new HtmlParser().extract(page, [
+      { tag: 'img', attr: 'src', name: 'images' }
+    ]);
+    const results = images.map(src => ({ imageUrl: src, sourceUrl: url, depth }));
+    writeFileSync(outputFilePath, JSON.stringify({
+      results
+    }));
   }
 }
 

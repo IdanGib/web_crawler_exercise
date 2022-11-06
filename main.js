@@ -1,8 +1,13 @@
 const {Crawler} = require('./crawler');
 
-function main() {
+async function main() {
   const crawler = new Crawler();
-  crawler.extractImages({ outputFilePath: 'results.json', depth: 0, url: 'https://picsum.photos' });
+  const config = {
+    outputFilePath: 'results.json', 
+    depth: 0, 
+    url: 'https://picsum.photos'
+  };
+  await crawler.extractImages(config);
 }
 
 main();
