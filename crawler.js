@@ -96,7 +96,7 @@ class Crawler {
       }));
     }));
     CrawlerHelper.updateResultsFile({outputFilePath, results });
-    extractImages({ urls: pagelinks, depth: _depth - 1, outputFilePath }); 
+    this.extractImages({ urls: pagelinks, depth: _depth - 1, outputFilePath }); 
   }
 }
 
