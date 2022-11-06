@@ -78,7 +78,6 @@ class CrawlerHelper {
 class Crawler {
   async extractImages({ outputFilePath, depth = 0, urls }) {
     if (isEmpty(urls) || isEmpty(outputFilePath) || depth < 0) {
-      console.error('Missing data');
       return;
     }
     if (depth < 0) {
