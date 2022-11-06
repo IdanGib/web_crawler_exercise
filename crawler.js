@@ -81,10 +81,14 @@ class Crawler {
       console.error('Missing data');
       return;
     }
+    if (depth < 0) {
+      return;
+    }
     const _depth = Math.floor(depth);
-    CrawlerHelper.clearResultsFile({ outputFilePath });
     const pages = await CrawlerHelper.extractPageImagesAndLinks({ urls });
+    const pagelinks = [];
     const results = flatten(pages.map(({ images, sourceUrl, links }) => {
+      pagelinks.push(...links);
       return images.map(src => ({
         sourceUrl,
         imageUrl: src,
@@ -92,11 +96,13 @@ class Crawler {
       }));
     }));
     CrawlerHelper.updateResultsFile({outputFilePath, results });
+    extractImages({ urls: pagelinks, depth: _depth - 1, outputFilePath }); 
   }
 }
 
 
 async function main() {
+  CrawlerHelper.clearResultsFile({ outputFilePath });
   const [url, depth] = process.argv.slice(2);
   const crawler = new Crawler();
   const config = {
