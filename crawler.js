@@ -102,7 +102,6 @@ class Crawler {
 
 
 async function main() {
-  CrawlerHelper.clearResultsFile({ outputFilePath });
   const [url, depth] = process.argv.slice(2);
   const crawler = new Crawler();
   const config = {
@@ -110,6 +109,7 @@ async function main() {
     depth, 
     urls: [url]
   };
+  CrawlerHelper.clearResultsFile({ outputFilePath: config.outputFilePath });
   await crawler.extractImages(config);
 }
 
