@@ -95,6 +95,16 @@ class Crawler {
   }
 }
 
-module.exports = {
-  Crawler
+
+async function main() {
+  const [url, depth] = process.argv.slice(2);
+  const crawler = new Crawler();
+  const config = {
+    outputFilePath: 'results.json', 
+    depth, 
+    urls: [url]
+  };
+  await crawler.extractImages(config);
 }
+
+main();
