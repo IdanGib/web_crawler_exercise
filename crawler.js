@@ -1,6 +1,7 @@
 const { writeFileSync, readFileSync } = require('fs');
 const htmlparser2 = require("htmlparser2");
 const axios = require('axios');
+const { isEmpty, flatten } = require('lodash');
 
 class HtmlParser {
   extract(page, data) {
@@ -54,22 +55,43 @@ class CrawlerHelper {
   static clearResultsFile({ outputFilePath }) {
     writeFileSync(outputFilePath,JSON.stringify({ results: [] }));
   }
+  static async extractPageImagesAndLinks({ urls }) {
+    const webPage = new WebPage();
+    const parser = new HtmlParser();
+    const results = await Promise.allSettled(urls.map(async sourceUrl => {
+      const page = await webPage.getPage(sourceUrl);
+      const {images, links} = await  parser.extract(page, [
+        { tag: 'img', attr: 'src', name: 'images' },
+        { tag: 'a', attr: 'href', name: 'links' }
+      ]);
+      return {
+        sourceUrl,
+        images: images,
+        links: links.filter(l => l.startsWith('https://'))
+      };
+    }));
+    const data = results.filter(r => r.status === 'fulfilled').map(r => r.value);
+    return data;
+  }
 }
 
 class Crawler {
-  async extractImages({ outputFilePath, depth = 0, url }) {
-    CrawlerHelper.clearResultsFile({ outputFilePath });
-    if (depth < 0) {
+  async extractImages({ outputFilePath, depth = 0, urls }) {
+    if (isEmpty(urls) || isEmpty(outputFilePath) || depth < 0) {
+      console.error('Missing data');
       return;
     }
     const _depth = Math.floor(depth);
-    const page = await new WebPage().getPage(url);
-    const { images, links } = await new HtmlParser().extract(page, [
-      { tag: 'img', attr: 'src', name: 'images' },
-      { tag: 'a', attr: 'href', name: 'links' }
-    ]);
-    const results = images.map(src => ({ imageUrl: src, sourceUrl: url, depth: _depth }));
-    CrawlerHelper.updateResultsFile({ outputFilePath, results });
+    CrawlerHelper.clearResultsFile({ outputFilePath });
+    const pages = await CrawlerHelper.extractPageImagesAndLinks({ urls });
+    const results = flatten(pages.map(({ images, sourceUrl, links }) => {
+      return images.map(src => ({
+        sourceUrl,
+        imageUrl: src,
+        depth: _depth
+      }));
+    }));
+    CrawlerHelper.updateResultsFile({outputFilePath, results });
   }
 }
 

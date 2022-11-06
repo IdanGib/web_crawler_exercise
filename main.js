@@ -5,7 +5,7 @@ async function main() {
   const config = {
     outputFilePath: 'results.json', 
     depth: 0, 
-    url: 'https://picsum.photos'
+    urls: ['https://picsum.photos']
   };
   await crawler.extractImages(config);
 }
